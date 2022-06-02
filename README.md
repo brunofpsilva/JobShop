@@ -30,3 +30,5 @@ gcc -fopenmp .\JobshopParelelo.c -o .\jobshop.exe
 ```
 .\jobshop.exe .\jobshop.txt
 ```
+
+Project from Master Degree in Informatics Engineering 2022.
