@@ -114,8 +114,6 @@ int main(int argc, char **argv)
             // Verificar se a machine está free
             if (machines[jobs[row].operations[col].machine].isFree)
             {
-                printf("\nFree, row: %d", row); // Debug
-
                 solution[row][col].initialTime = maxEndTime;
                 solution[row][col].endTime = solution[row][col].initialTime + jobs[row].operations[col].time;
 
@@ -125,8 +123,6 @@ int main(int argc, char **argv)
             }
             else
             {
-                printf("\nNot Free, row: %d", row); // Debug
-
                 solution[row][col].initialTime = machines[jobs[row].operations[col].machine].endTime;
                 solution[row][col].endTime = solution[row][col].initialTime + jobs[row].operations[col].time;
 
@@ -137,16 +133,21 @@ int main(int argc, char **argv)
 
             // Ponto de barreira, as threads não podem avançar até todas chegarem a este ponto
 #pragma omp barrier
-            // Encontrar maximo de tempo por iteração das colunas
-            for (int mAux = 0; mAux < nrJobs; mAux++)
-                if (maxEndTime < solution[mAux][col].endTime)
-                    maxEndTime = solution[mAux][col].endTime;
-
-            // Reset machines
-            for (int m = 0; m < nrMachines; m++)
+            // Só uma thread atualiza o estado partilhado; a barreira implícita no fim do single
+            // impede que outra thread comece a coluna seguinte antes do reset das máquinas
+#pragma omp single
             {
-                machines[m].isFree = true;
-                machines[m].endTime = 0;
+                // Encontrar maximo de tempo por iteração das colunas
+                for (int mAux = 0; mAux < nrJobs; mAux++)
+                    if (maxEndTime < solution[mAux][col].endTime)
+                        maxEndTime = solution[mAux][col].endTime;
+
+                // Reset machines
+                for (int m = 0; m < nrMachines; m++)
+                {
+                    machines[m].isFree = true;
+                    machines[m].endTime = 0;
+                }
             }
         }
     }
